@@ -1,0 +1,61 @@
+@CrudBreakfast_HostAddress = http://localhost:5052
+@id=00000000-0000-0000-0000-000000000000
+
+
+GET {{CrudBreakfast_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+GET http://localhost:5052/breakfasts/{{id}}
+
+###
+DELETE http://localhost:5052/breakfasts/{{id}}
+
+###
+PUT http://localhost:5052/breakfasts/{{id}}
+Content-Type: application/json
+
+{
+    "name": "Vegan Sunshine 2",
+    "description": "Vegan everything! Join us for a healthy breakfast..",
+    "startDateTime": "2022-04-08T08:00:00",
+    "endDateTime": "2022-04-08T11:00:00",
+    "savory": [
+        "Oatmeal",
+        "Avocado Toast",
+        "Omelette",
+        "Salad"
+    ],
+    "Sweet": [
+        "Cookie"
+    ]
+}
+
+###
+POST http://localhost:5052/breakfast
+Content-Type: application/json
+
+
+{
+    "name": "V",
+    "description": "",
+    "startDateTime": "2022-04-08T08:00:00",
+    "endDateTime": "2022-04-08T11:00:00",
+    "savory": [
+        "Oatmeal",
+        "Avocado Toast",
+        "Omelette",
+        "Salad"
+    ],
+    "Sweet": [
+        "Cookie"
+    ]
+}
+
+###
+
+GET https://localhost:7094/Breakfasts/e35daaba-5a9e-43a2-9305-3dead8296fe0
+
+###
+GET http://localhost:5052/breakfasts
