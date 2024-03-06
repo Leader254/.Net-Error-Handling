@@ -1,54 +1,61 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using AutoMapper;
+using CrudBreakfast.Data;
 using CrudBreakfast.Models;
 using CrudBreakfast.ServiceErrors;
 using ErrorOr;
+using Microsoft.EntityFrameworkCore;
 
 namespace CrudBreakfast.Service.Breakfast
 {
     public class BreakFastService : IBreakFastService
     {
-        private static readonly Dictionary<Guid, BreakFast> _breakfasts = new();
-        public ErrorOr<Created> CreateBreakFast(BreakFast breakfast)
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
+        public BreakFastService(AppDbContext context, IMapper mapper)
         {
-            _breakfasts.Add(breakfast.Id, breakfast);
+            _context = context;
+            _mapper = mapper;
+        }
+        public async Task<ErrorOr<Created>> CreateBreakFast(BreakFast breakfast)
+        {
+            await _context.Breakfasts.AddAsync(breakfast);
+            await _context.SaveChangesAsync();
             return Result.Created;
         }
 
-        public ErrorOr<Deleted> DeleteBreakFast(Guid id)
+        public async Task<ErrorOr<Deleted>> DeleteBreakFast(Guid id)
         {
-            // check if the breakfast exists
-            if (!_breakfasts.ContainsKey(id))
+            var breakfast = await _context.Breakfasts.Where(b => b.Id == id).FirstOrDefaultAsync();
+            if (breakfast != null)
             {
-                throw new Exception("Breakfast not found");
+                _context.Breakfasts.Remove(breakfast);
+                await _context.SaveChangesAsync();
+                return Result.Deleted;
             }
-            _breakfasts.Remove(id);
-            return Result.Deleted;
+            return Errors.Breakfast.NotFound;
         }
 
         public async Task<IEnumerable<BreakFast>> GetAllBreakFast()
         {
-            var breakfasts = _breakfasts.Values.ToList();
-            return await Task.FromResult(breakfasts);
+            return await _context.Breakfasts.ToListAsync();
         }
 
-        public ErrorOr<BreakFast> GetSingleBreakFast(Guid id)
+        public async Task<ErrorOr<BreakFast>> GetSingleBreakFast(Guid id)
         {
-        // check if the breakfast exists
-            if(_breakfasts.TryGetValue(id, out var breakfast))
+            var breakfast = await _context.Breakfasts.Where(b => b.Id == id).FirstOrDefaultAsync();
+            if (breakfast != null)
             {
                 return breakfast;
             }
             return Errors.Breakfast.NotFound;
         }
 
-        public ErrorOr<UpdateBreakfast> UpdateBreakFast(Guid id, BreakFast breakfast)
+        public async Task<ErrorOr<UpdateBreakfast>> UpdateBreakFast(Guid id, BreakFast breakfast)
         {
-            var isNewlyCreated = !_breakfasts.ContainsKey(breakfast.Id);
-            _breakfasts[id] = breakfast;
-            return new UpdateBreakfast(isNewlyCreated);
+            _context.Breakfasts.Update(breakfast);
+            await _context.SaveChangesAsync();
+            return new UpdateBreakfast();
         }
     }
 }

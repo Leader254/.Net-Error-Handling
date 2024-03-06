@@ -16,24 +16,32 @@ namespace CrudBreakfast.Controller
 		}
 		// Create breakfats
 		[HttpPost("breakfast")]
-		public IActionResult CreateBreakFast(CreateBreakFastReq req)
+		public async Task<IActionResult> CreateBreakFast(CreateBreakFastReq req)
         {
-
-            ErrorOr<BreakFast> breakfastReq = BreakFast.Create( req.Name, req.Description, req.StartDateTime, req.EndDateTime, req.Savory, req.Sweet);
+            ErrorOr<BreakFast> breakfastReq = BreakFast.Create(
+                req.Name, 
+                req.Description, 
+                req.StartDateTime, 
+                req.EndDateTime, 
+                req.Savory, 
+                req.Sweet
+            );
 
             if (breakfastReq.IsError)
-			{
-				return Problem(breakfastReq.Errors);
-			}
+            {
+                return Problem(breakfastReq.Errors);
+            }
 
-			var breakfast = breakfastReq.Value;
-			ErrorOr<Created> createdBreakfast = _breakFastService.CreateBreakFast(breakfast);
+            var breakfast = breakfastReq.Value;
 
-			return createdBreakfast.Match(
-				created => CreatedAtGet(breakfast),
-				errors => Problem(errors)
-			);
-			
+            var createdBreakfast = await _breakFastService.CreateBreakFast(breakfast);
+
+            if (createdBreakfast.IsError)
+            {
+                return Problem(createdBreakfast.Errors);
+            }
+
+			return CreatedAtGet(breakfast);
         }
 
         private IActionResult CreatedAtGet(BreakFast breakfast)
@@ -48,9 +56,9 @@ namespace CrudBreakfast.Controller
 
         // Get Breakfast
         [HttpGet("breakfast/{id:guid}")]
-		public IActionResult GetSingleBreakFast(Guid id)
+		public async Task<IActionResult> GetSingleBreakFast(Guid id)
 		{
-			ErrorOr<BreakFast> getBreakfastResult = _breakFastService.GetSingleBreakFast(id);
+			ErrorOr<BreakFast> getBreakfastResult = await _breakFastService.GetSingleBreakFast(id);
 
 			return getBreakfastResult.Match(
 				breakfast => Ok(MapBreakfastResponse(breakfast)),
@@ -74,7 +82,7 @@ namespace CrudBreakfast.Controller
 
 		// Update
 		[HttpPut("breakfast/{id:guid}")]
-		public IActionResult UpdateBreakFast(Guid id, UpsertBreakFastReq req)
+		public async Task<IActionResult> UpdateBreakFast(Guid id, UpsertBreakFastReq req)
 		{
 			ErrorOr<BreakFast> breakfastRes = BreakFast.Create(req.Name, req.Description, req.StartDateTime, req.EndDateTime,  req.Savory, req.Sweet, id);
 
@@ -84,7 +92,7 @@ namespace CrudBreakfast.Controller
 			}
 
 			var breakfast = breakfastRes.Value;
-			ErrorOr<UpdateBreakfast> updatedRes = _breakFastService.UpdateBreakFast(id, breakfast);
+			ErrorOr<UpdateBreakfast> updatedRes = await _breakFastService.UpdateBreakFast(id, breakfast);
 			
 			return updatedRes.Match(
 				updated => updated.IsNewlyCreated ? CreatedAtGet(breakfast) :NoContent(),
@@ -94,9 +102,9 @@ namespace CrudBreakfast.Controller
 
 		// Delete action
 		[HttpDelete("breakfast/{id:guid}")]
-		public IActionResult DeleteBreakFast(Guid id)
+		public async Task<IActionResult> DeleteBreakFast(Guid id)
 		{
-			ErrorOr<Deleted> deletedBreakfast = _breakFastService.DeleteBreakFast(id);
+			ErrorOr<Deleted> deletedBreakfast = await _breakFastService.DeleteBreakFast(id);
 
 			return deletedBreakfast.Match(
 				deleted => NoContent(),
@@ -105,9 +113,9 @@ namespace CrudBreakfast.Controller
 
 		// Get all breakfasts
 		[HttpGet("breakfasts")]
-		public IActionResult GetAllBreakFast()
+		public async Task<IActionResult> GetAllBreakFast()
 		{
-			var breakfasts = _breakFastService.GetAllBreakFast();
+			var breakfasts = await _breakFastService.GetAllBreakFast();
 			return Ok(breakfasts);
 		}
 
